@@ -1,0 +1,74 @@
+# tiny-bucket-quota
+
+> Hierarchical token-bucket quota allocator. Org → team → user budgets that auto-balance. Stdlib only. MIT.
+
+## What it does
+
+Implements a tree of token buckets where every child consumes from its
+parent. A `try_acquire` along a path (e.g. `["org:acme", "team:backend", "user:42"]`)
+is **all-or-nothing**: if any node has zero capacity, nothing is
+consumed.
+
+Sister libraries:
+- `tiny-rate-limiter` — flat token-bucket for LLM RPM/TPM. No hierarchy.
+- `tiny-rate-window` — sliding-window. No hierarchy.
+- `tiny-cost` — USD-denominated spend tracking. No RPM dimension.
+
+## When to use
+
+Use this when:
+- Multiple users/teams share a parent budget (cost-center rollup).
+- You need org-level visibility of "who is burning through the budget".
+- A flat limiter would let a user burn the team's budget without
+  anyone noticing.
+
+If your hierarchy is one level, use `tiny-rate-window` or
+`tiny-rate-limiter` instead.
+
+## Install
+
+```bash
+pip install tiny-bucket-quota
+```
+
+## Public API
+
+```python
+from tiny_bucket_quota import QuotaTree, acquire_or_raise, QuotaExceeded
+
+tree = QuotaTree()
+tree.add(parent=None, child="org:acme", limit=5000, window_seconds=60)
+tree.add(parent="org:acme", child="team:backend", limit=2000, window_seconds=60)
+tree.add(parent="team:backend", child="user:42", limit=50, window_seconds=60)
+
+try:
+    acquire_or_raise(tree, ["org:acme", "team:backend", "user:42"])
+    call_external_api()
+except QuotaExceeded as e:
+    return 429, e.blocked_at
+```
+
+Full API:
+- `QuotaTree(*, clock=time.monotonic)`
+- `tree.add(parent=None, child, *, limit, window_seconds)`
+- `tree.try_acquire(path, *, cost=1, now=None) -> QuotaDecision`
+- `tree.peek(path, *, now=None) -> QuotaDecision`
+- `tree.reset(path=None)`
+- `tree.stats() -> QuotaStats`
+- `tree.remaining(name, *, now=None) -> int`
+- `acquire_or_raise(tree, path, *, cost=1) -> None`
+- `QuotaExceeded(blocked_at, decision)` exception
+
+## Constants
+
+- `__version__ = "0.1.0"`
+- 23 unit tests in `test_tiny_bucket_quota.py`
+
+## Thread safety
+
+A single `threading.Lock` per `QuotaTree`. Reasonable for ~120K acquires/sec
+on 3-level paths with 10K nodes.
+
+## License
+
+MIT. Author: Hussain AlSaibai <hussain.alsaibai@gmail.com>.
