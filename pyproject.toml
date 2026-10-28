@@ -20,4 +20,4 @@ classifiers = [
 test = ["pytest>=7.0"]
 
 [tool.setuptools]
-py-modules = ["tiny_rate_window"]
+py-modules = ["tiny_bucket_quota"]
