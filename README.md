@@ -5,7 +5,8 @@
 Stdlib only. MIT licensed. ~370 LOC. 23 tests.
 
 ```bash
-pip install tiny-bucket-quota
+# From GitHub (recommended -- not yet on PyPI)
+pip install git+https://github.com/hussain-alsaibai/tiny-bucket-quota.git
 ```
 
 ---
