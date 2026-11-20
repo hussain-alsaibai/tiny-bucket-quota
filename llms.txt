@@ -27,8 +27,10 @@ If your hierarchy is one level, use `tiny-rate-window` or
 
 ## Install
 
+NOTE: unpublished on PyPI -- the bare name is not on the index, so the `pip install <name>` form 404s. The URL below is the install.
+
 ```bash
-pip install tiny-bucket-quota
+pip install "tiny-bucket-quota @ git+https://github.com/hussain-alsaibai/tiny-bucket-quota.git"
 ```
 
 ## Public API
